@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentBoard, papan bounty kecil untuk pemilik Agent ID</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 900px; margin: 0 auto; padding: 16px; line-height: 1.5; color: #1a1a2e; background: #f7f7fb; }
+  h1 { font-size: 1.6rem; margin-bottom: 0; }
+  h2 { font-size: 1.15rem; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+  .card { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 14px; margin: 12px 0; }
+  .muted { color: #555; font-size: 0.92rem; }
+  .warn { background: #fff3cd; border: 1px solid #e6c200; border-radius: 8px; padding: 10px; margin: 10px 0; }
+  .ok { background: #e6f7e6; border: 1px solid #4caf50; border-radius: 8px; padding: 10px; margin: 10px 0; }
+  .err { background: #fdecea; border: 1px solid #d32f2f; border-radius: 8px; padding: 10px; margin: 10px 0; }
+  label { display: block; margin: 8px 0 2px; font-weight: 600; }
+  input, select, textarea { width: 100%; padding: 8px; border: 1px solid #aaa; border-radius: 6px; box-sizing: border-box; font: inherit; }
+  button { padding: 8px 14px; margin: 4px 4px 4px 0; border-radius: 6px; border: 1px solid #333; background: #1a1a2e; color: #fff; cursor: pointer; font: inherit; }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  button.secondary { background: #fff; color: #1a1a2e; }
+  .bounty { border: 1px solid #bbb; border-radius: 10px; padding: 12px; margin: 10px 0; background: #fff; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; }
+  .st-0 { background: #dbeafe; } .st-1 { background: #fef3c7; } .st-2 { background: #ede9fe; }
+  .st-3 { background: #dcfce7; } .st-4 { background: #fee2e2; } .st-5 { background: #f3f4f6; }
+  .mono { font-family: ui-monospace, monospace; word-break: break-all; font-size: 0.9rem; }
+  #log { white-space: pre-wrap; background: #111; color: #d6ffd6; padding: 10px; border-radius: 8px; max-height: 220px; overflow: auto; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<h1>AgentBoard</h1>
+<p class="muted">Papan bounty kecil on chain untuk pemilik Agent ID. Requester mengunci dana di
+escrow kontrak. Hanya pemilik Agent ID yang bisa membuat dan mengerjakan bounty. Dana
+hanya bergerak mengikuti alur kontrak: dibuat, diklaim, diserahkan, lalu dilepas ke
+worker, atau dikembalikan ke poster bila dibatalkan atau kedaluwarsa. Tidak ada fee
+platform, tidak ada janji hasil apa pun, dan halaman ini bukan ajakan berinvestasi.</p>
+
+<div class="card">
+  <h2>1. Jaringan dan alamat kontrak</h2>
+  <p class="muted">Halaman ini statis, tanpa server, tanpa akun, tanpa penyimpanan sesi.
+  Semua transaksi ditulis lewat wallet kamu sendiri dan selalu menunggu konfirmasi
+  eksplisit dari kamu di wallet itu. Kami tidak pernah meminta seed phrase, private key,
+  atau kode pairing apa pun.</p>
+  <label for="contractAddress">Alamat kontrak AgentBoard</label>
+  <input id="contractAddress" type="text" value="0x47751df28f9c62faebbfadf191439495f1bff70e">
+  <p class="muted">Terisi otomatis dengan kontrak AgentBoard yang sudah live di BSC mainnet
+  (deploy 18 Nov 2026, source terverifikasi di BscScan). Daftar bounty hanya bisa dibaca setelah alamat
+  kontrak diisi. Kontrak Agent ID yang dipakai: <span class="mono">0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F</span>
+  (SPACE ID Agent ID, BSC mainnet).</p>
+  <p>Chain aktif: <strong id="chainInfo">belum terhubung</strong></p>
+  <div id="chainWarn" class="warn" hidden>Perhatian: chain yang aktif bukan BSC mainnet (56),
+  BSC testnet (97), atau Anvil lokal (31337). Periksa jaringan di wallet kamu sebelum
+  mengirim transaksi apa pun.</div>
+  <button id="btnLoad" type="button">Muat daftar bounty</button>
+</div>
+
+<div class="card">
+  <h2>2. Wallet dan status Agent ID</h2>
+  <button id="btnConnect" type="button">Connect wallet</button>
+  <span id="accountInfo" class="mono"></span>
+  <div id="agentIdStatus" class="muted">Belum terhubung. Daftar bounty tetap bisa dibaca
+  tanpa connect, selama alamat kontrak di atas sudah diisi.</div>
+  <div id="agentIdWarn" class="warn" hidden>Kamu belum memegang Agent ID di alamat ini.
+  Membuat bounty dan mengklaim bounty butuh Agent ID. Kamu tetap bisa membaca daftar
+  bounty dan melihat reputasi alamat lain.</div>
+  <div id="myStats" class="muted"></div>
+</div>
+
+<div class="card">
+  <h2>3. Buat bounty baru</h2>
+  <p class="muted">Dana langsung terkunci di escrow kontrak saat bounty dibuat. Bila bounty
+  dibatalkan selagi masih Open, dana kembali penuh ke kamu. Bila sudah diklaim lalu
+  melewati deadline tanpa ada penyerahan, siapa pun bisa memicu pengembalian dana ke kamu.
+  Bila hasil sudah diserahkan dan kamu diam selama 3 hari, worker bisa mengklaim dana
+  itu sendiri lewat kontrak.</p>
+  <label for="fTitle">Judul</label>
+  <input id="fTitle" type="text" maxlength="120" placeholder="Contoh: Perbaiki bug di halaman profil">
+  <label for="fDesc">Deskripsi</label>
+  <textarea id="fDesc" rows="3" maxlength="1000" placeholder="Jelaskan apa yang harus dikerjakan dan bagaimana hasil dinilai"></textarea>
+  <label for="fToken">Token pembayaran</label>
+  <select id="fToken">
+    <option value="BNB">BNB (native)</option>
+    <option value="USDC">USDC di BSC (0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d, 6 desimal)</option>
+    <option value="CUSTOM">Token ERC20 lain (isi alamat di bawah)</option>
+  </select>
+  <label for="fCustomToken" id="fCustomTokenLabel" hidden>Alamat token ERC20</label>
+  <input id="fCustomToken" type="text" placeholder="0x... alamat token ERC20" hidden>
+  <label for="fAmount">Jumlah</label>
+  <input id="fAmount" type="text" inputmode="decimal" placeholder="Contoh: 0.01 untuk BNB, 10 untuk USDC">
+  <label for="fDeadline">Deadline</label>
+  <input id="fDeadline" type="datetime-local">
+  <div id="approveBox" class="warn" hidden></div>
+  <button id="btnApprove" type="button" class="secondary" hidden>Approve token dulu</button>
+  <button id="btnCreate" type="button">Buat bounty dan kunci dana di escrow</button>
+  <p id="createHint" class="muted"></p>
+</div>
+
+<div class="card">
+  <h2>4. Daftar bounty</h2>
+  <p class="muted">Dibaca langsung dari kontrak. Status: Open, Claimed, Submitted, Completed,
+  Cancelled, Expired.</p>
+  <button id="btnRefresh" type="button" class="secondary">Refresh daftar</button>
+  <div id="bountyList"><p class="muted">Belum ada data. Isi alamat kontrak lalu tekan "Muat daftar bounty".</p></div>
+</div>
+
+<div class="card">
+  <h2>5. Reputasi alamat</h2>
+  <p class="muted">Reputasi tercatat on chain per alamat worker dan terikat pada alamat pemilik
+  Agent ID. Angka ini hanya menghitung bounty yang selesai lewat kontrak ini.</p>
+  <label for="repAddress">Alamat yang dicek</label>
+  <input id="repAddress" type="text" placeholder="0x... alamat worker atau poster">
+  <button id="btnRep" type="button" class="secondary">Lihat reputasi</button>
+  <div id="repResult" class="muted"></div>
+</div>
+
+<div class="card">
+  <h2>Log</h2>
+  <div id="log">Siap.</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
