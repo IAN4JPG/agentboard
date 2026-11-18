@@ -19,17 +19,11 @@ submit: hosting frontend + 30 alamat Agent ID berinteraksi + pengajuan proyek.
   bounty; requester melepas dana setelah hasil diserahkan; reputasi per Agent ID
   tercatat on-chain.
 - **Website:** `https://ian4jpg.github.io/agentboard/` (GitHub Pages, folder `docs/`)
-  — BELUM LIVE. Repo GitHub `agentboard` belum bisa dibuat lewat konektor
-  (GitHub App tidak boleh membuat repo, error 403) dan Pages tidak bisa
-  diaktifkan lewat API. Butuh user membuat repo publik kosong `agentboard` di
-  github.com lalu memberi akses ke Muse GitHub App; setelah itu Miku push dan
-  Pages diaktifkan (Settings → Pages → main branch, folder `/docs`).
-  Alternatif satu langkah: repo `IAN4JPG.github.io` (otomatis terbit).
-  Token Cloudflare yang ada hanya berhak atas Workers AI (probe 18 Nov: 403),
-  jadi Cloudflare Pages tidak bisa dipakai dengan kredensial ini.
-- **Repo:** `https://github.com/IAN4JPG/agentboard` (BELUM DIBUAT — sama seperti
-  di atas; isi repo sudah siap di `~/workspace/binance-agentid-hackathon/`,
-  manifest push 18 file sudah disiapkan).
+  — LIVE sejak 18 Nov 2026 21:43 WIB. Repo dibuat Miku lewat Chrome user
+  (jalur API GitHub 403), 23 file proyek di-push commit 66091406, Pages aktif
+  branch main folder `/docs`.
+- **Repo:** `https://github.com/IAN4JPG/agentboard` (DIBUAT 18 Nov 2026 21:33 WIB;
+  23 file, commit 66091406).
 - **Kontrak:** `contracts/AgentBoard.sol`, Solidity ^0.8.28, single file, tanpa
   import, tanpa owner, tanpa fee platform.
 
@@ -101,14 +95,14 @@ pengumuman Binance dan akun @BinanceWallet / @BNBCHAIN untuk tautan formulir.
 ## Isi pengajuan (siap tempel)
 
 - **Nama proyek:** AgentBoard
-- **Website:** https://ian4jpg.github.io/agentboard/ (GitHub Pages; BELUM LIVE,
-  menunggu repo dibuat user — lihat bagian Website di atas)
+- **Website:** https://ian4jpg.github.io/agentboard/ (GitHub Pages; LIVE sejak
+  18 Nov 2026 21:43 WIB)
 - **Alamat kontrak (BSC mainnet):** 0x47751df28f9c62faebbfadf191439495f1bff70e
   ([BscScan](https://bscscan.com/address/0x47751df28f9c62faebbfadf191439495f1bff70e),
   source terverifikasi, Exact Match, solc 0.8.28, optimizer 200 runs, MIT)
 - **Tx deploy:** 0x0bf3127c02af163fb8eaea5841224d8bd59c09bd2df23c35aa258c40e524c404
-- **Repo (open source):** https://github.com/IAN4JPG/agentboard (BELUM DIBUAT —
-  sama seperti di atas)
+- **Repo (open source):** https://github.com/IAN4JPG/agentboard (DIBUAT 18 Nov 2026,
+  23 file, commit 66091406)
 - **Deskripsi pemakaian Agent ID:** Agent ID adalah gerbang dan identitas di
   seluruh alur inti produk, bukan tempelan. `createBounty` dan `claimBounty`
   (serta semua aksi tulis) memeriksa `balanceOf(msg.sender) > 0` pada kontrak
@@ -137,18 +131,16 @@ pengumuman Binance dan akun @BinanceWallet / @BNBCHAIN untuk tautan formulir.
 
 1. ~~Persetujuan user + preview untuk deploy mainnet~~ — SELESAI 18 Nov 20:52 WIB.
 2. ~~Deploy + verifikasi source di BscScan.~~ — SELESAI 18 Nov 20:57 WIB.
-3. **Hosting frontend (TERHALANG, butuh user):** buat repo publik kosong
-   `agentboard` di github.com + beri akses ke Muse GitHub App → Miku push
-   (manifest 18 file siap) → aktifkan Pages (main, `/docs`) → live di
-   `https://ian4jpg.github.io/agentboard/`. Alternatif satu langkah: repo
-   `IAN4JPG.github.io` (otomatis terbit; frontend di root).
-4. **Uji end-to-end mainnet (MENUNGGU PERSETUJUAN USER):** rencana lengkap di
-   `rencana-uji-mainnet.md`. Fase A (uji poster, 0,001 BNB, dibatalkan +
-   refund, biaya bersih sekitar 0,0000158 BNB / 0,009 USD) + Fase B (bounty
-   beneran 0,001 BNB untuk worker pemegang Agent ID lain, biaya lactus sekitar
-   0,0010184 BNB / 0,60 USD). Saldo lactus 0,002023 BNB hanya cukup untuk
-   Fase A + SATU bounty 0,001 BNB. TIDAK ADA eksekusi sebelum user menyetujui
-   angka pastinya.
+3. **Hosting frontend** — SELESAI 18 Nov 2026 21:43 WIB: repo `agentboard` dibuat
+   Miku lewat Chrome user, 23 file di-push commit 66091406, Pages aktif (main,
+   `/docs`), live di `https://ian4jpg.github.io/agentboard/`.
+4. **Uji end-to-end mainnet:** rencana lengkap di `rencana-uji-mainnet.md`.
+   **Fase A SELESAI 18 Nov 2026 21:21 WIB** (createBounty #0 lalu cancelBounty #0,
+   keduanya terkonfirmasi, refund 0,001 BNB penuh, biaya bersih aktual
+   0,0000255 BNB / 0,015 USD). Fase B (bounty beneran 0,001 BNB untuk worker
+   pemegang Agent ID lain, biaya lactus sekitar 0,0010184 BNB / 0,60 USD)
+   masih menunggu satu pemegang Agent ID lain sebagai worker. Saldo lactus kini
+   0,001827 BNB.
 5. **Kanal submit (MENUNGGU TAUTAN RESMI):** formulir proyek belum diterbitkan
    tautannya di pengumuman resmi (lihat bagian Kanal submit). Isi pengajuan
    sudah siap tempel di atas.

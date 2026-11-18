@@ -9,11 +9,9 @@ Papan bounty kecil on-chain untuk Binance Agent ID Hackathon (submit 18 Nov – 
 ("Exact Match", solc 0.8.28, optimizer 200 runs, MIT),
 [lihat di BscScan](https://bscscan.com/address/0x47751df28f9c62faebbfadf191439495f1bff70e).
 Website: `https://ian4jpg.github.io/agentboard/` (GitHub Pages, folder `docs/`) —
-BELUM LIVE: repo GitHub `agentboard` belum bisa dibuat lewat konektor (GitHub App
-tidak boleh membuat repo, error 403) dan Pages belum bisa diaktifkan lewat API.
-Butuh user membuat repo publik kosong `agentboard` di github.com lalu memberi
-akses ke Muse GitHub App; setelah itu Miku push dan aktifkan Pages. Alternatif
-satu langkah: repo `IAN4JPG.github.io` (otomatis terbit sebagai situs user).
+LIVE sejak 18 Nov 2026 21:43 WIB. Repo dibuat Miku lewat Chrome user (jalur API
+GitHub 403, jadi dibuat manual di browser), 23 file proyek di-push commit
+66091406, Pages aktif branch main folder `docs`.
 
 Siapa pun bisa memasang bounty dengan mengunci dana (BNB atau ERC20) di kontrak escrow.
 Hanya pemilik Agent ID yang bisa mengklaim dan mengerjakan bounty. Requester melepas
