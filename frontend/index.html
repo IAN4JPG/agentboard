@@ -1,123 +1,594 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AgentBoard, papan bounty kecil untuk pemilik Agent ID</title>
+<title data-i18n="meta.title">AgentBoard, a micro-bounty board for Agent ID holders</title>
 <style>
-  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 900px; margin: 0 auto; padding: 16px; line-height: 1.5; color: #1a1a2e; background: #f7f7fb; }
-  h1 { font-size: 1.6rem; margin-bottom: 0; }
-  h2 { font-size: 1.15rem; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
-  .card { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 14px; margin: 12px 0; }
-  .muted { color: #555; font-size: 0.92rem; }
-  .warn { background: #fff3cd; border: 1px solid #e6c200; border-radius: 8px; padding: 10px; margin: 10px 0; }
-  .ok { background: #e6f7e6; border: 1px solid #4caf50; border-radius: 8px; padding: 10px; margin: 10px 0; }
-  .err { background: #fdecea; border: 1px solid #d32f2f; border-radius: 8px; padding: 10px; margin: 10px 0; }
-  label { display: block; margin: 8px 0 2px; font-weight: 600; }
-  input, select, textarea { width: 100%; padding: 8px; border: 1px solid #aaa; border-radius: 6px; box-sizing: border-box; font: inherit; }
-  button { padding: 8px 14px; margin: 4px 4px 4px 0; border-radius: 6px; border: 1px solid #333; background: #1a1a2e; color: #fff; cursor: pointer; font: inherit; }
-  button:disabled { opacity: 0.45; cursor: not-allowed; }
-  button.secondary { background: #fff; color: #1a1a2e; }
-  .bounty { border: 1px solid #bbb; border-radius: 10px; padding: 12px; margin: 10px 0; background: #fff; }
-  .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; }
-  .st-0 { background: #dbeafe; } .st-1 { background: #fef3c7; } .st-2 { background: #ede9fe; }
-  .st-3 { background: #dcfce7; } .st-4 { background: #fee2e2; } .st-5 { background: #f3f4f6; }
-  .mono { font-family: ui-monospace, monospace; word-break: break-all; font-size: 0.9rem; }
-  #log { white-space: pre-wrap; background: #111; color: #d6ffd6; padding: 10px; border-radius: 8px; max-height: 220px; overflow: auto; font-size: 0.85rem; }
+  :root {
+    --bg: #0a0d13;
+    --card: #131926;
+    --card-2: #171f30;
+    --border: #242e42;
+    --text: #eef1f6;
+    --muted: #9aa5b8;
+    --gold: #F0B90B;
+    --gold-dark: #c99a06;
+    --gold-soft: rgba(240, 185, 11, 0.12);
+    --green: #34d399;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --amber: #fbbf24;
+    --purple: #a78bfa;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    max-width: 960px; margin: 0 auto; padding: 16px 20px 48px; line-height: 1.55;
+    color: var(--text);
+    background:
+      radial-gradient(700px 320px at 85% -60px, rgba(240, 185, 11, 0.14), transparent 65%),
+      radial-gradient(600px 300px at -10% 0%, rgba(96, 165, 250, 0.08), transparent 60%),
+      var(--bg);
+  }
+  ::selection { background: var(--gold); color: #14100a; }
+
+  /* ---------- Language switcher ---------- */
+  .topbar { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+  .lang-switch {
+    display: inline-flex; border: 1px solid rgba(240, 185, 11, 0.55);
+    border-radius: 999px; overflow: hidden; background: rgba(255, 255, 255, 0.03);
+  }
+  .lang-switch button {
+    width: auto; margin: 0; padding: 6px 14px; border: none; border-radius: 0;
+    background: transparent; color: var(--muted); font-size: 0.85rem; font-weight: 700;
+  }
+  .lang-switch button:hover { background: var(--gold-soft); filter: none; }
+  .lang-switch button.active { background: var(--gold); color: #14100a; }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 44px 0 10px; }
+  .eyebrow {
+    display: inline-block; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--gold);
+    border: 1px solid rgba(240, 185, 11, 0.45); background: var(--gold-soft);
+    border-radius: 999px; padding: 5px 14px; margin-bottom: 18px;
+  }
+  h1 { font-size: clamp(2.6rem, 8vw, 4.2rem); line-height: 1.02; margin: 0 0 14px; letter-spacing: -0.02em; }
+  h1 .gold { color: var(--gold); }
+  .hero p.lead { font-size: 1.08rem; color: #c6cede; max-width: 720px; margin: 0 0 22px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 18px; }
+  a.btn, button {
+    display: inline-block; padding: 11px 20px; border-radius: 10px; font: inherit;
+    font-weight: 700; text-decoration: none; cursor: pointer;
+    border: 1px solid var(--gold); background: var(--gold); color: #14100a;
+    transition: transform 0.08s ease, filter 0.15s ease, background 0.15s ease;
+  }
+  a.btn:hover, button:hover { filter: brightness(1.08); }
+  a.btn:active, button:active { transform: translateY(1px); }
+  a.btn.ghost, button.secondary {
+    background: transparent; color: var(--gold); border: 1px solid rgba(240, 185, 11, 0.55);
+  }
+  a.btn.ghost:hover, button.secondary:hover { background: var(--gold-soft); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; filter: none; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 26px; }
+  .chip {
+    font-size: 0.85rem; color: var(--muted); border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03); border-radius: 999px; padding: 4px 12px;
+  }
+  .chip b { color: var(--text); font-weight: 600; }
+
+  /* ---------- Kartu ---------- */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .grid-2 .card { margin: 0; }
+  .card {
+    background: linear-gradient(180deg, var(--card-2), var(--card));
+    border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; margin: 16px 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    scroll-margin-top: 16px;
+  }
+  .card:hover { border-color: #2f3c55; }
+  h2 {
+    font-size: 1.18rem; margin: 0 0 12px; display: flex; align-items: center; gap: 10px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  h2::before {
+    content: ""; flex: 0 0 auto; width: 9px; height: 9px;
+    background: var(--gold); transform: rotate(45deg); border-radius: 2px;
+  }
+  .muted { color: var(--muted); font-size: 0.92rem; }
+  .warn {
+    background: rgba(251, 191, 36, 0.10); border: 1px solid rgba(251, 191, 36, 0.45);
+    color: #fde68a; border-radius: 10px; padding: 10px 12px; margin: 10px 0;
+  }
+  .ok {
+    background: rgba(52, 211, 153, 0.10); border: 1px solid rgba(52, 211, 153, 0.40);
+    color: #a7f3d0; border-radius: 10px; padding: 10px 12px; margin: 10px 0;
+  }
+  .err {
+    background: rgba(248, 113, 113, 0.10); border: 1px solid rgba(248, 113, 113, 0.40);
+    color: #fecaca; border-radius: 10px; padding: 10px 12px; margin: 10px 0;
+  }
+  label { display: block; margin: 10px 0 4px; font-weight: 600; font-size: 0.93rem; }
+  input, select, textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid #2b3549; border-radius: 10px;
+    box-sizing: border-box; font: inherit; color: var(--text); background: #0c111a;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(240, 185, 11, 0.22);
+  }
+  input::placeholder, textarea::placeholder { color: #5f6b80; }
+  button { padding: 10px 16px; margin: 6px 6px 6px 0; }
+  .bounty {
+    border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+    margin: 12px 0; background: rgba(255, 255, 255, 0.025);
+  }
+  .bounty strong { font-size: 1.02rem; }
+  .badge {
+    display: inline-block; padding: 2px 11px; border-radius: 999px;
+    font-size: 0.82rem; font-weight: 700; vertical-align: middle;
+  }
+  .st-0 { background: rgba(96, 165, 250, 0.18); color: #93c5fd; }
+  .st-1 { background: rgba(251, 191, 36, 0.16); color: #fcd34d; }
+  .st-2 { background: rgba(167, 139, 250, 0.18); color: #c4b5fd; }
+  .st-3 { background: rgba(52, 211, 153, 0.16); color: #6ee7b7; }
+  .st-4 { background: rgba(248, 113, 113, 0.16); color: #fca5a5; }
+  .st-5 { background: rgba(148, 163, 184, 0.16); color: #cbd5e1; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; font-size: 0.9rem; }
+  #log {
+    white-space: pre-wrap; background: #070a0f; color: #a9f0b8; padding: 12px 14px;
+    border-radius: 10px; border: 1px solid var(--border); max-height: 220px; overflow: auto;
+    font-size: 0.85rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  #accountInfo { word-break: break-all; }
+  footer { margin-top: 28px; text-align: center; color: var(--muted); font-size: 0.88rem; }
+  footer .rule { height: 1px; background: var(--border); margin-bottom: 16px; }
+
+  @media (max-width: 760px) {
+    body { padding: 12px 14px 40px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .hero { padding-top: 28px; }
+    .card { padding: 16px; }
+    a.btn, button { width: 100%; text-align: center; margin: 4px 0; }
+    .cta { flex-direction: column; }
+    h2 { font-size: 1.08rem; }
+  }
 </style>
 </head>
 <body>
-<h1>AgentBoard</h1>
-<p class="muted">Papan bounty kecil on chain untuk pemilik Agent ID. Requester mengunci dana di
-escrow kontrak. Hanya pemilik Agent ID yang bisa membuat dan mengerjakan bounty. Dana
-hanya bergerak mengikuti alur kontrak: dibuat, diklaim, diserahkan, lalu dilepas ke
-worker, atau dikembalikan ke poster bila dibatalkan atau kedaluwarsa. Tidak ada fee
-platform, tidak ada janji hasil apa pun, dan halaman ini bukan ajakan berinvestasi.</p>
 
+<header class="hero">
+  <div class="topbar">
+    <span class="lang-switch" role="group" aria-label="Language / Bahasa">
+      <button id="langEn" type="button" title="English">EN</button>
+      <button id="langId" type="button" title="Bahasa Indonesia">ID</button>
+    </span>
+  </div>
+  <span class="eyebrow">BNB Chain &middot; Agent ID Hackathon</span>
+  <h1>Agent<span class="gold">Board</span></h1>
+  <p class="lead" data-i18n="hero.lead">A small on-chain bounty board for Agent ID holders. Requesters lock funds in
+  the contract escrow. Only Agent ID holders can create and work on bounties. Funds
+  only move along the contract flow: created, claimed, submitted, then released to
+  the worker, or returned to the poster if cancelled or expired. No platform fees,
+  no promise of any return, and this page is not an invitation to invest.</p>
+  <div class="cta">
+    <a class="btn" href="#sec-daftar" data-i18n="hero.ctaList">Browse bounties</a>
+    <a class="btn ghost" href="#sec-buat" data-i18n="hero.ctaCreate">Create a new bounty</a>
+  </div>
+  <div class="chips">
+    <span class="chip"><b>BSC mainnet</b></span>
+    <span class="chip" data-i18n-html="hero.chipFees"><b>No</b> platform fees</span>
+    <span class="chip" data-i18n-html="hero.chipOwner"><b>No owner</b></span>
+    <span class="chip" data-i18n-html="hero.chipRep">Reputation recorded <b>on chain</b></span>
+  </div>
+</header>
+
+<div class="grid-2">
 <div class="card">
-  <h2>1. Jaringan dan alamat kontrak</h2>
-  <p class="muted">Halaman ini statis, tanpa server, tanpa akun, tanpa penyimpanan sesi.
-  Semua transaksi ditulis lewat wallet kamu sendiri dan selalu menunggu konfirmasi
-  eksplisit dari kamu di wallet itu. Kami tidak pernah meminta seed phrase, private key,
-  atau kode pairing apa pun.</p>
-  <label for="contractAddress">Alamat kontrak AgentBoard</label>
+  <h2 data-i18n="sec1.title">1. Network and contract address</h2>
+  <p class="muted" data-i18n="sec1.intro">This page is static: no server, no account, no session storage.
+  Every transaction is sent through your own wallet and always waits for your
+  explicit confirmation in that wallet. We never ask for a seed phrase, private key,
+  or pairing code of any kind.</p>
+  <label for="contractAddress" data-i18n="sec1.label">AgentBoard contract address</label>
   <input id="contractAddress" type="text" value="0x47751df28f9c62faebbfadf191439495f1bff70e">
-  <p class="muted">Terisi otomatis dengan kontrak AgentBoard yang sudah live di BSC mainnet
-  (deploy 18 Nov 2026, source terverifikasi di BscScan). Daftar bounty hanya bisa dibaca setelah alamat
-  kontrak diisi. Kontrak Agent ID yang dipakai: <span class="mono">0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F</span>
+  <p class="muted" data-i18n-html="sec1.note">Pre-filled with the AgentBoard contract already live on BSC mainnet
+  (deployed 18 Nov 2026, source verified on BscScan). The bounty list can only be read after the
+  contract address is filled in. The Agent ID contract used: <span class="mono">0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F</span>
   (SPACE ID Agent ID, BSC mainnet).</p>
-  <p>Chain aktif: <strong id="chainInfo">belum terhubung</strong></p>
-  <div id="chainWarn" class="warn" hidden>Perhatian: chain yang aktif bukan BSC mainnet (56),
-  BSC testnet (97), atau Anvil lokal (31337). Periksa jaringan di wallet kamu sebelum
-  mengirim transaksi apa pun.</div>
-  <button id="btnLoad" type="button">Muat daftar bounty</button>
+  <p><span data-i18n="sec1.chainActive">Active chain:</span> <strong id="chainInfo">not connected</strong></p>
+  <div id="chainWarn" class="warn" hidden data-i18n="sec1.chainWarn">Warning: the active chain is not BSC mainnet (56),
+  BSC testnet (97), or local Anvil (31337). Check the network in your wallet before
+  sending any transaction.</div>
+  <button id="btnLoad" type="button" data-i18n="sec1.btnLoad">Load bounty list</button>
 </div>
 
 <div class="card">
-  <h2>2. Wallet dan status Agent ID</h2>
+  <h2 data-i18n="sec2.title">2. Wallet and Agent ID status</h2>
   <button id="btnConnect" type="button">Connect wallet</button>
   <span id="accountInfo" class="mono"></span>
-  <div id="agentIdStatus" class="muted">Belum terhubung. Daftar bounty tetap bisa dibaca
-  tanpa connect, selama alamat kontrak di atas sudah diisi.</div>
-  <div id="agentIdWarn" class="warn" hidden>Kamu belum memegang Agent ID di alamat ini.
-  Membuat bounty dan mengklaim bounty butuh Agent ID. Kamu tetap bisa membaca daftar
-  bounty dan melihat reputasi alamat lain.</div>
+  <div id="agentIdStatus" class="muted" data-i18n="sec2.status">Not connected. The bounty list can still be read
+  without connecting, as long as the contract address above is filled in.</div>
+  <div id="agentIdWarn" class="warn" hidden data-i18n="sec2.warn">You do not hold an Agent ID at this address.
+  Creating and claiming bounties requires an Agent ID. You can still read the bounty
+  list and check other addresses' reputation.</div>
   <div id="myStats" class="muted"></div>
 </div>
+</div>
 
-<div class="card">
-  <h2>3. Buat bounty baru</h2>
-  <p class="muted">Dana langsung terkunci di escrow kontrak saat bounty dibuat. Bila bounty
-  dibatalkan selagi masih Open, dana kembali penuh ke kamu. Bila sudah diklaim lalu
-  melewati deadline tanpa ada penyerahan, siapa pun bisa memicu pengembalian dana ke kamu.
-  Bila hasil sudah diserahkan dan kamu diam selama 3 hari, worker bisa mengklaim dana
-  itu sendiri lewat kontrak.</p>
-  <label for="fTitle">Judul</label>
-  <input id="fTitle" type="text" maxlength="120" placeholder="Contoh: Perbaiki bug di halaman profil">
-  <label for="fDesc">Deskripsi</label>
-  <textarea id="fDesc" rows="3" maxlength="1000" placeholder="Jelaskan apa yang harus dikerjakan dan bagaimana hasil dinilai"></textarea>
-  <label for="fToken">Token pembayaran</label>
+<div class="card" id="sec-buat">
+  <h2 data-i18n="sec3.title">3. Create a new bounty</h2>
+  <p class="muted" data-i18n="sec3.intro">Funds are locked in the contract escrow as soon as the bounty is created.
+  If the bounty is cancelled while still Open, the funds return in full to you. If it
+  has been claimed and passes its deadline with no submission, anyone can trigger a
+  refund of the funds to you. If work has been submitted and you stay silent for 3
+  days, the worker can claim the funds themselves through the contract.</p>
+  <label for="fTitle" data-i18n="sec3.titleLabel">Title</label>
+  <input id="fTitle" type="text" maxlength="120" data-i18n-ph="sec3.titlePh" placeholder="Example: Fix a bug on the profile page">
+  <label for="fDesc" data-i18n="sec3.descLabel">Description</label>
+  <textarea id="fDesc" rows="3" maxlength="1000" data-i18n-ph="sec3.descPh" placeholder="Explain what needs to be done and how the result will be judged"></textarea>
+  <label for="fToken" data-i18n="sec3.tokenLabel">Payment token</label>
   <select id="fToken">
     <option value="BNB">BNB (native)</option>
-    <option value="USDC">USDC di BSC (0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d, 6 desimal)</option>
-    <option value="CUSTOM">Token ERC20 lain (isi alamat di bawah)</option>
+    <option value="USDC" data-i18n="sec3.optUsdc">USDC on BSC (0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d, 6 decimals)</option>
+    <option value="CUSTOM" data-i18n="sec3.optCustom">Another ERC20 token (fill in the address below)</option>
   </select>
-  <label for="fCustomToken" id="fCustomTokenLabel" hidden>Alamat token ERC20</label>
-  <input id="fCustomToken" type="text" placeholder="0x... alamat token ERC20" hidden>
-  <label for="fAmount">Jumlah</label>
-  <input id="fAmount" type="text" inputmode="decimal" placeholder="Contoh: 0.01 untuk BNB, 10 untuk USDC">
-  <label for="fDeadline">Deadline</label>
+  <label for="fCustomToken" id="fCustomTokenLabel" hidden data-i18n="sec3.customLabel">ERC20 token address</label>
+  <input id="fCustomToken" type="text" data-i18n-ph="sec3.customPh" placeholder="0x... ERC20 token address" hidden>
+  <label for="fAmount" data-i18n="sec3.amountLabel">Amount</label>
+  <input id="fAmount" type="text" inputmode="decimal" data-i18n-ph="sec3.amountPh" placeholder="Example: 0.01 for BNB, 10 for USDC">
+  <label for="fDeadline" data-i18n="sec3.deadlineLabel">Deadline</label>
   <input id="fDeadline" type="datetime-local">
   <div id="approveBox" class="warn" hidden></div>
-  <button id="btnApprove" type="button" class="secondary" hidden>Approve token dulu</button>
-  <button id="btnCreate" type="button">Buat bounty dan kunci dana di escrow</button>
+  <button id="btnApprove" type="button" class="secondary" hidden data-i18n="sec3.btnApprove">Approve token first</button>
+  <button id="btnCreate" type="button" data-i18n="sec3.btnCreate">Create bounty and lock funds in escrow</button>
   <p id="createHint" class="muted"></p>
 </div>
 
-<div class="card">
-  <h2>4. Daftar bounty</h2>
-  <p class="muted">Dibaca langsung dari kontrak. Status: Open, Claimed, Submitted, Completed,
+<div class="card" id="sec-daftar">
+  <h2 data-i18n="sec4.title">4. Bounty list</h2>
+  <p class="muted" data-i18n="sec4.intro">Read directly from the contract. Statuses: Open, Claimed, Submitted, Completed,
   Cancelled, Expired.</p>
-  <button id="btnRefresh" type="button" class="secondary">Refresh daftar</button>
-  <div id="bountyList"><p class="muted">Belum ada data. Isi alamat kontrak lalu tekan "Muat daftar bounty".</p></div>
+  <button id="btnRefresh" type="button" class="secondary" data-i18n="sec4.btnRefresh">Refresh list</button>
+  <div id="bountyList"><p class="muted" data-i18n="sec4.empty">No data yet. Fill in the contract address, then press "Load bounty list".</p></div>
 </div>
 
 <div class="card">
-  <h2>5. Reputasi alamat</h2>
-  <p class="muted">Reputasi tercatat on chain per alamat worker dan terikat pada alamat pemilik
-  Agent ID. Angka ini hanya menghitung bounty yang selesai lewat kontrak ini.</p>
-  <label for="repAddress">Alamat yang dicek</label>
-  <input id="repAddress" type="text" placeholder="0x... alamat worker atau poster">
-  <button id="btnRep" type="button" class="secondary">Lihat reputasi</button>
+  <h2 data-i18n="sec5.title">5. Address reputation</h2>
+  <p class="muted" data-i18n="sec5.intro">Reputation is recorded on chain per worker address and tied to the address
+  holding the Agent ID. These numbers only count bounties completed through this contract.</p>
+  <label for="repAddress" data-i18n="sec5.label">Address to check</label>
+  <input id="repAddress" type="text" data-i18n-ph="sec5.ph" placeholder="0x... worker or poster address">
+  <button id="btnRep" type="button" class="secondary" data-i18n="sec5.btnRep">Check reputation</button>
   <div id="repResult" class="muted"></div>
 </div>
 
 <div class="card">
   <h2>Log</h2>
-  <div id="log">Siap.</div>
+  <div id="log">Ready.</div>
 </div>
+
+<footer>
+  <div class="rule"></div>
+  <span data-i18n-html="footer.text">AgentBoard &middot; a micro-bounty board for Agent ID holders &middot; contract verified on BscScan</span>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
 <script src="app.js"></script>
+<script>
+/* AgentBoard i18n: English default, EN/ID switcher, choice saved in localStorage.
+   app.js is NOT modified: static copy is translated via data-i18n attributes,
+   and strings app.js writes into the DOM are translated by a MutationObserver
+   using exact pairs + templates (user-entered bounty titles/descriptions are
+   never touched: the observer skips bounty description/title nodes). The #log
+   event transcript is intentionally left in its original language. */
+(function () {
+  "use strict";
+  var LANG_KEY = "agentboard-lang";
+
+  var I18N = {
+    en: {
+      "meta.title": "AgentBoard, a micro-bounty board for Agent ID holders",
+      "hero.lead": "A small on-chain bounty board for Agent ID holders. Requesters lock funds in the contract escrow. Only Agent ID holders can create and work on bounties. Funds only move along the contract flow: created, claimed, submitted, then released to the worker, or returned to the poster if cancelled or expired. No platform fees, no promise of any return, and this page is not an invitation to invest.",
+      "hero.ctaList": "Browse bounties",
+      "hero.ctaCreate": "Create a new bounty",
+      "hero.chipFees": "<b>No</b> platform fees",
+      "hero.chipOwner": "<b>No owner</b>",
+      "hero.chipRep": "Reputation recorded <b>on chain</b>",
+      "sec1.title": "1. Network and contract address",
+      "sec1.intro": "This page is static: no server, no account, no session storage. Every transaction is sent through your own wallet and always waits for your explicit confirmation in that wallet. We never ask for a seed phrase, private key, or pairing code of any kind.",
+      "sec1.label": "AgentBoard contract address",
+      "sec1.note": "Pre-filled with the AgentBoard contract already live on BSC mainnet (deployed 18 Nov 2026, source verified on BscScan). The bounty list can only be read after the contract address is filled in. The Agent ID contract used: <span class=\"mono\">0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F</span> (SPACE ID Agent ID, BSC mainnet).",
+      "sec1.chainActive": "Active chain:",
+      "sec1.chainWarn": "Warning: the active chain is not BSC mainnet (56), BSC testnet (97), or local Anvil (31337). Check the network in your wallet before sending any transaction.",
+      "sec1.btnLoad": "Load bounty list",
+      "sec2.title": "2. Wallet and Agent ID status",
+      "sec2.status": "Not connected. The bounty list can still be read without connecting, as long as the contract address above is filled in.",
+      "sec2.warn": "You do not hold an Agent ID at this address. Creating and claiming bounties requires an Agent ID. You can still read the bounty list and check other addresses' reputation.",
+      "sec3.title": "3. Create a new bounty",
+      "sec3.intro": "Funds are locked in the contract escrow as soon as the bounty is created. If the bounty is cancelled while still Open, the funds return in full to you. If it has been claimed and passes its deadline with no submission, anyone can trigger a refund of the funds to you. If work has been submitted and you stay silent for 3 days, the worker can claim the funds themselves through the contract.",
+      "sec3.titleLabel": "Title",
+      "sec3.titlePh": "Example: Fix a bug on the profile page",
+      "sec3.descLabel": "Description",
+      "sec3.descPh": "Explain what needs to be done and how the result will be judged",
+      "sec3.tokenLabel": "Payment token",
+      "sec3.optUsdc": "USDC on BSC (0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d, 6 decimals)",
+      "sec3.optCustom": "Another ERC20 token (fill in the address below)",
+      "sec3.customLabel": "ERC20 token address",
+      "sec3.customPh": "0x... ERC20 token address",
+      "sec3.amountLabel": "Amount",
+      "sec3.amountPh": "Example: 0.01 for BNB, 10 for USDC",
+      "sec3.deadlineLabel": "Deadline",
+      "sec3.btnApprove": "Approve token first",
+      "sec3.btnCreate": "Create bounty and lock funds in escrow",
+      "sec4.title": "4. Bounty list",
+      "sec4.intro": "Read directly from the contract. Statuses: Open, Claimed, Submitted, Completed, Cancelled, Expired.",
+      "sec4.btnRefresh": "Refresh list",
+      "sec4.empty": "No data yet. Fill in the contract address, then press \"Load bounty list\".",
+      "sec5.title": "5. Address reputation",
+      "sec5.intro": "Reputation is recorded on chain per worker address and tied to the address holding the Agent ID. These numbers only count bounties completed through this contract.",
+      "sec5.label": "Address to check",
+      "sec5.ph": "0x... worker or poster address",
+      "sec5.btnRep": "Check reputation",
+      "footer.text": "AgentBoard &middot; a micro-bounty board for Agent ID holders &middot; contract verified on BscScan"
+    },
+    id: {
+      "meta.title": "AgentBoard, papan bounty kecil untuk pemilik Agent ID",
+      "hero.lead": "Papan bounty kecil on chain untuk pemilik Agent ID. Requester mengunci dana di escrow kontrak. Hanya pemilik Agent ID yang bisa membuat dan mengerjakan bounty. Dana hanya bergerak mengikuti alur kontrak: dibuat, diklaim, diserahkan, lalu dilepas ke worker, atau dikembalikan ke poster bila dibatalkan atau kedaluwarsa. Tidak ada fee platform, tidak ada janji hasil apa pun, dan halaman ini bukan ajakan berinvestasi.",
+      "hero.ctaList": "Lihat daftar bounty",
+      "hero.ctaCreate": "Buat bounty baru",
+      "hero.chipFees": "<b>Tanpa fee</b> platform",
+      "hero.chipOwner": "<b>Tanpa owner</b>",
+      "hero.chipRep": "Reputasi tercatat <b>on chain</b>",
+      "sec1.title": "1. Jaringan dan alamat kontrak",
+      "sec1.intro": "Halaman ini statis, tanpa server, tanpa akun, tanpa penyimpanan sesi. Semua transaksi ditulis lewat wallet kamu sendiri dan selalu menunggu konfirmasi eksplisit dari kamu di wallet itu. Kami tidak pernah meminta seed phrase, private key, atau kode pairing apa pun.",
+      "sec1.label": "Alamat kontrak AgentBoard",
+      "sec1.note": "Terisi otomatis dengan kontrak AgentBoard yang sudah live di BSC mainnet (deploy 18 Nov 2026, source terverifikasi di BscScan). Daftar bounty hanya bisa dibaca setelah alamat kontrak diisi. Kontrak Agent ID yang dipakai: <span class=\"mono\">0x60B9262456dE011F7d15a54CdD8c48bAaa8B022F</span> (SPACE ID Agent ID, BSC mainnet).",
+      "sec1.chainActive": "Chain aktif:",
+      "sec1.chainWarn": "Perhatian: chain yang aktif bukan BSC mainnet (56), BSC testnet (97), atau Anvil lokal (31337). Periksa jaringan di wallet kamu sebelum mengirim transaksi apa pun.",
+      "sec1.btnLoad": "Muat daftar bounty",
+      "sec2.title": "2. Wallet dan status Agent ID",
+      "sec2.status": "Belum terhubung. Daftar bounty tetap bisa dibaca tanpa connect, selama alamat kontrak di atas sudah diisi.",
+      "sec2.warn": "Kamu belum memegang Agent ID di alamat ini. Membuat bounty dan mengklaim bounty butuh Agent ID. Kamu tetap bisa membaca daftar bounty dan melihat reputasi alamat lain.",
+      "sec3.title": "3. Buat bounty baru",
+      "sec3.intro": "Dana langsung terkunci di escrow kontrak saat bounty dibuat. Bila bounty dibatalkan selagi masih Open, dana kembali penuh ke kamu. Bila sudah diklaim lalu melewati deadline tanpa ada penyerahan, siapa pun bisa memicu pengembalian dana ke kamu. Bila hasil sudah diserahkan dan kamu diam selama 3 hari, worker bisa mengklaim dana itu sendiri lewat kontrak.",
+      "sec3.titleLabel": "Judul",
+      "sec3.titlePh": "Contoh: Perbaiki bug di halaman profil",
+      "sec3.descLabel": "Deskripsi",
+      "sec3.descPh": "Jelaskan apa yang harus dikerjakan dan bagaimana hasil dinilai",
+      "sec3.tokenLabel": "Token pembayaran",
+      "sec3.optUsdc": "USDC di BSC (0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d, 6 desimal)",
+      "sec3.optCustom": "Token ERC20 lain (isi alamat di bawah)",
+      "sec3.customLabel": "Alamat token ERC20",
+      "sec3.customPh": "0x... alamat token ERC20",
+      "sec3.amountLabel": "Jumlah",
+      "sec3.amountPh": "Contoh: 0.01 untuk BNB, 10 untuk USDC",
+      "sec3.deadlineLabel": "Deadline",
+      "sec3.btnApprove": "Approve token dulu",
+      "sec3.btnCreate": "Buat bounty dan kunci dana di escrow",
+      "sec4.title": "4. Daftar bounty",
+      "sec4.intro": "Dibaca langsung dari kontrak. Status: Open, Claimed, Submitted, Completed, Cancelled, Expired.",
+      "sec4.btnRefresh": "Refresh daftar",
+      "sec4.empty": "Belum ada data. Isi alamat kontrak lalu tekan \"Muat daftar bounty\".",
+      "sec5.title": "5. Reputasi alamat",
+      "sec5.intro": "Reputasi tercatat on chain per alamat worker dan terikat pada alamat pemilik Agent ID. Angka ini hanya menghitung bounty yang selesai lewat kontrak ini.",
+      "sec5.label": "Alamat yang dicek",
+      "sec5.ph": "0x... alamat worker atau poster",
+      "sec5.btnRep": "Lihat reputasi",
+      "footer.text": "AgentBoard &middot; papan bounty kecil untuk pemilik Agent ID &middot; kontrak terverifikasi di BscScan"
+    }
+  };
+
+  /* [english, indonesian] pairs for strings app.js writes into the DOM.
+     Applied as plain substring replacement, longest first, only inside the
+     watched containers below. Order in the array is irrelevant: sorted by
+     length at runtime so longer phrases win over their substrings. */
+  var PAIRS = [
+    ["Klaim bounty", "Claim bounty"],
+    ["Submit hasil kerja", "Submit work"],
+    ["Release pembayaran ke worker", "Release payment to worker"],
+    ["Batalkan bounty (refund penuh)", "Cancel bounty (full refund)"],
+    ["Refund expired (deadline lewat)", "Refund expired (deadline passed)"],
+    ["Klaim timeout (poster diam 3 hari)", "Claim timeout (poster silent for 3 days)"],
+    [" Klaim butuh Agent ID.", " Claiming requires an Agent ID."],
+    ["Bukti kerja: tautan atau teks (contoh: ipfs://... atau URL hasil kerja)", "Proof of work: link or text (e.g. ipfs://... or a URL to your work)"],
+    ["Hadiah: ", "Reward: "],
+    [" (sudah lewat)", " (passed)"],
+    ["Bukti kerja: ", "Proof of work: "],
+    [" (satuan mentah di chain)", " (raw on-chain units)"],
+    [", satuan mentah di chain)", ", raw on-chain units)"],
+    ["(satuan mentah)", "(raw units)"],
+    ["Belum ada bounty di kontrak ini.", "No bounties on this contract yet."],
+    ["Memuat dari kontrak...", "Loading from the contract..."],
+    ["Gagal membaca kontrak: ", "Failed to read the contract: "],
+    ["belum terhubung", "not connected"],
+    ["Anvil lokal", "local Anvil"],
+    ["chain tidak dikenal (", "unknown chain ("],
+    ["Status Agent ID belum bisa dicek: ", "Agent ID status could not be checked: "],
+    ["Alamat tidak valid.", "Invalid address."],
+    ["Gagal membaca reputasi: ", "Failed to read reputation: "],
+    ["Isi dulu alamat kontrak AgentBoard di bagian 1.", "Fill in the AgentBoard contract address in section 1 first."],
+    ["Allowance sudah cukup (", "Allowance is sufficient ("],
+    ["Kontrak belum diizinkan menarik token kamu. Allowance saat ini ", "The contract is not yet allowed to pull your tokens. Current allowance "],
+    [", sedangkan bounty butuh ", ", while the bounty needs "],
+    [". Tekan tombol approve di bawah: itu transaksi terpisah yang juga menunggu konfirmasi kamu di wallet, dan hanya mengizinkan tepat sebesar jumlah bounty ini, bukan tanpa batas.", ". Press the approve button below: it is a separate transaction that also waits for your confirmation in the wallet, and it only allows exactly this bounty's amount, not an unlimited amount."],
+    [" dari wallet kamu.", " from your wallet."],
+    ["Siap.", "Ready."]
+  ];
+  PAIRS.sort(function (a, b) { return b[0].length - a[0].length; });
+
+  /* Templates with numbers/addresses: [idPattern, idTemplate, enPattern, enTemplate] */
+  var TEMPLATES = [
+    [/^Agent ID: YA\. Alamat ini memegang Agent ID \(balanceOf = (\d+)\)\. Kamu bisa membuat dan mengklaim bounty\.$/,
+     "Agent ID: YA. Alamat ini memegang Agent ID (balanceOf = $1). Kamu bisa membuat dan mengklaim bounty.",
+     /^Agent ID: YES\. This address holds an Agent ID \(balanceOf = (\d+)\)\. You can create and claim bounties\.$/,
+     "Agent ID: YES. This address holds an Agent ID (balanceOf = $1). You can create and claim bounties."],
+    [/^Agent ID: TIDAK\. Alamat ini belum memegang Agent ID \(balanceOf = (\d+)\)\.$/,
+     "Agent ID: TIDAK. Alamat ini belum memegang Agent ID (balanceOf = $1).",
+     /^Agent ID: NO\. This address does not hold an Agent ID yet \(balanceOf = (\d+)\)\.$/,
+     "Agent ID: NO. This address does not hold an Agent ID yet (balanceOf = $1)."],
+    [/^Reputasi kamu di kontrak ini: (\d+) bounty selesai, total earned mentah (\d+) \(tercampur bila bounty memakai token berbeda\), (\d+) klaim aktif\.$/,
+     "Reputasi kamu di kontrak ini: $1 bounty selesai, total earned mentah $2 (tercampur bila bounty memakai token berbeda), $3 klaim aktif.",
+     /^Your reputation on this contract: (\d+) bounties completed, total raw earned (\d+) \(mixed if bounties use different tokens\), (\d+) active claims\.$/,
+     "Your reputation on this contract: $1 bounties completed, total raw earned $2 (mixed if bounties use different tokens), $3 active claims."],
+    [/^Alamat (\S+): memegang Agent ID: (ya \(\d+\)|tidak)\. Bounty selesai: (\d+)\. Total earned \(satuan mentah, tercampur bila bounty memakai token berbeda\): (\d+)\. Klaim aktif: (\d+)\.$/,
+     "Alamat $1: memegang Agent ID: $2. Bounty selesai: $3. Total earned (satuan mentah, tercampur bila bounty memakai token berbeda): $4. Klaim aktif: $5.",
+     /^Address (\S+): holds an Agent ID: (yes \(\d+\)|no)\. Bounties completed: (\d+)\. Total earned \(raw units, mixed if bounties use different tokens\): (\d+)\. Active claims: (\d+)\.$/,
+     "Address $1: holds an Agent ID: $2. Bounties completed: $3. Total earned (raw units, mixed if bounties use different tokens): $4. Active claims: $5."],
+    [/^BNB sebesar (\S+) (\S+) akan dikunci di escrow saat transaksi dikonfirmasi di wallet kamu\.$/,
+     "BNB sebesar $1 $2 akan dikunci di escrow saat transaksi dikonfirmasi di wallet kamu.",
+     /^BNB of (\S+) (\S+) will be locked in escrow when the transaction is confirmed in your wallet\.$/,
+     "BNB of $1 $2 will be locked in escrow when the transaction is confirmed in your wallet."]
+  ];
+
+  var lang = "en";
+  try {
+    var saved = window.localStorage.getItem(LANG_KEY);
+    if (saved === "id" || saved === "en") lang = saved;
+  } catch (e) { /* storage unavailable: stay on English default */ }
+
+  function applyDynToString(s, target) {
+    if (!s) return s;
+    var out = s;
+    var i, m;
+    /* templates first (whole-string matches) */
+    for (i = 0; i < TEMPLATES.length; i++) {
+      var t = TEMPLATES[i];
+      if (target === "en") {
+        m = out.match(t[0]);
+        if (m) {
+          var rep = t[3];
+          if (t === TEMPLATES[3]) {
+            /* $2 is "ya (N)" or "tidak": map to English */
+            rep = rep.replace("$2", m[2] === "tidak" ? "no" : "yes (" + m[2].slice(4, -1) + ")");
+          }
+          out = out.replace(t[0], rep.replace(/\$(\d)/g, function (_, n) { return m[+n] || ""; }));
+          if (t === TEMPLATES[3]) out = out.replace(/\$2/g, "");
+        }
+      } else {
+        m = out.match(t[2]);
+        if (m) {
+          var repId = t[1];
+          if (t === TEMPLATES[3]) {
+            repId = repId.replace("$2", m[2] === "no" ? "tidak" : "ya (" + m[2].slice(4, -1) + ")");
+          }
+          out = out.replace(t[2], repId.replace(/\$(\d)/g, function (_, n) { return m[+n] || ""; }));
+          if (t === TEMPLATES[3]) out = out.replace(/\$2/g, "");
+        }
+      }
+    }
+    /* plain pairs: replace the other language's phrase with the target's */
+    for (i = 0; i < PAIRS.length; i++) {
+      var from = target === "en" ? PAIRS[i][0] : PAIRS[i][1];
+      var to = target === "en" ? PAIRS[i][1] : PAIRS[i][0];
+      if (out.indexOf(from) !== -1) out = out.split(from).join(to);
+    }
+    return out;
+  }
+
+  /* Skip user-entered content: bounty titles (strong inside the title div
+     of a .bounty card) and bounty descriptions (the plain <p> inside
+     .bounty). Everything else in the watched containers is app.js UI copy. */
+  function isUserContent(node) {
+    var p = node.parentNode;
+    if (!p) return false;
+    if (p.tagName === "STRONG" && p.parentNode && p.parentNode.parentNode &&
+        p.parentNode.parentNode.className === "bounty") return true;
+    if (p.tagName === "P" && p.parentNode && p.parentNode.className === "bounty" && p.className !== "muted") return true;
+    return false;
+  }
+
+  function translateNode(node, target) {
+    if (node.nodeType === 3) {
+      if (isUserContent(node)) return;
+      var next = applyDynToString(node.nodeValue, target);
+      if (next !== node.nodeValue) node.nodeValue = next;
+    } else if (node.nodeType === 1) {
+      if (node.tagName === "INPUT" && node.placeholder) {
+        var ph = applyDynToString(node.placeholder, target);
+        if (ph !== node.placeholder) node.placeholder = ph;
+      }
+      if (node.tagName === "SCRIPT" || node.tagName === "STYLE") return;
+      var kids = node.childNodes;
+      for (var i = 0; i < kids.length; i++) translateNode(kids[i], target);
+    }
+  }
+
+  var WATCH_IDS = ["bountyList", "agentIdStatus", "myStats", "chainInfo", "createHint", "repResult", "approveBox", "agentIdWarn", "chainWarn"];
+  function translateDynamic(target) {
+    WATCH_IDS.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) translateNode(el, target);
+    });
+    /* #log: only translate the leading "Siap." / "Ready." marker, never the
+       appended event lines. */
+    var log = document.getElementById("log");
+    if (log) {
+      var txt = log.textContent;
+      if (target === "en" && txt.indexOf("Siap.") === 0) log.textContent = "Ready." + txt.slice(5);
+      if (target === "id" && txt.indexOf("Ready.") === 0) log.textContent = "Siap." + txt.slice(6);
+    }
+  }
+
+  function norm(s) { return s.replace(/\s+/g, " ").trim(); }
+  /* Only overwrite a data-i18n element with the static dictionary text when
+     it still holds a static value. Elements app.js also writes to
+     (#agentIdStatus, #agentIdWarn, #chainWarn) keep their dynamic content;
+     translateDynamic() below translates that content instead. */
+  function isStaticText(el, key) {
+    var cur = norm(el.textContent);
+    return cur === norm(I18N.en[key]) || cur === norm(I18N.id[key]);
+  }
+
+  function applyLang(target) {
+    lang = target;
+    document.documentElement.lang = target;
+    var dict = I18N[target];
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      var key = el.getAttribute("data-i18n");
+      var v = dict[key];
+      if (v !== undefined && isStaticText(el, key) && el.textContent !== v) el.textContent = v;
+    });
+    document.querySelectorAll("[data-i18n-html]").forEach(function (el) {
+      var v = dict[el.getAttribute("data-i18n-html")];
+      if (v !== undefined && el.innerHTML !== v) el.innerHTML = v;
+    });
+    document.querySelectorAll("[data-i18n-ph]").forEach(function (el) {
+      var v = dict[el.getAttribute("data-i18n-ph")];
+      if (v !== undefined && el.placeholder !== v) el.placeholder = v;
+    });
+    document.getElementById("langEn").classList.toggle("active", target === "en");
+    document.getElementById("langId").classList.toggle("active", target === "id");
+    translateDynamic(target);
+  }
+
+  function setLang(target) {
+    try { window.localStorage.setItem(LANG_KEY, target); } catch (e) { /* ignore */ }
+    applyLang(target);
+  }
+
+  document.getElementById("langEn").addEventListener("click", function () { setLang("en"); });
+  document.getElementById("langId").addEventListener("click", function () { setLang("id"); });
+
+  var observer = new MutationObserver(function (mutations) {
+    mutations.forEach(function (m) {
+      if (m.type === "characterData") {
+        translateNode(m.target, lang);
+      } else {
+        m.addedNodes.forEach(function (n) { translateNode(n, lang); });
+      }
+    });
+  });
+  WATCH_IDS.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) observer.observe(el, { childList: true, subtree: true, characterData: true });
+  });
+
+  applyLang(lang);
+})();
+</script>
 </body>
 </html>
